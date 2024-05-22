@@ -22,7 +22,6 @@
         9000,
         9001
     ],
-    "remoteUser": "vscode",
     "remoteEnv": {
         "MINIO_ROOT_USER": "${localEnv:MINIO_ROOT_USER}",
         "MINIO_ROOT_PASSWORD": "${localEnv:MINIO_ROOT_PASSWORD}",
