@@ -1,6 +1,6 @@
 {
     "name": "depictio devcontainer",
-    "dockerComposeFile": ["../docker-compose.yaml"], // Adjusting the path
+    "dockerComposeFile": ["../docker-compose.yaml"], 
     "service": "depictio_frontend",
     "workspaceFolder": "/workspace",
     "extensions": [
@@ -12,7 +12,6 @@
     "settings": {
         "terminal.integrated.shell.linux": "/bin/bash"
     },
-    "postCreateCommand": "conda env create -f conda_envs/depictio_cli.yaml && ./download_depictio_data.sh",
     "forwardPorts": [
         27018,
         3000,
