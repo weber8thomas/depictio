@@ -1,34 +1,68 @@
 {
-    "name": "depictio devcontainer",
-    "dockerComposeFile": ["../docker-compose.yaml"], // Adjusting the path
-    "service": "depictio_frontend",
-    "workspaceFolder": "/workspace",
-    "extensions": [
-        "ms-python.python",
-        "ms-azuretools.vscode-docker",
-        "ms-python.anaconda-extension-pack",
-        "GitHub.copilot"
-    ],
-    "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash"
+    "name": "Depictio devcontainer",
+    // "dockerComposeFile": [
+    //     "../docker-compose.yml"
+    // ],
+    "image": "mcr.microsoft.com/devcontainers/python:1-3.11",
+    // "service": "depictio_frontend",
+    "workspaceFolder": "/workspaces/depictio",
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "editor.tabSize": 2,
+                "git.detectSubmodules": false,
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "workbench.editor.wrapTabs": true
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-azuretools.vscode-docker",
+                "ms-python.anaconda-extension-pack",
+                "GitHub.copilot",
+                "charliermarsh.ruff",
+                "mongodb.mongodb-vscode"
+            ]
+        }
     },
-    "postCreateCommand": "conda env create -f conda_envs/depictio_cli.yaml && ./download_depictio_data.sh",
-    "forwardPorts": [
-        27018,
-        3000,
-        9010,
-        5080,
-        8058,
-        9000,
-        9001
-    ],
-    "remoteUser": "vscode",
+    "postCreateCommand": "./setup_codespaces.sh",
+    // "forwardPorts": [
+    //     27018,
+    //     5080,
+    //     8058,
+    //     9000,
+    //     9001
+    // ],
+    // "portsAttributes": {
+    //     "27018": {
+    //         "label": "mongo"
+    //     },
+    //     "5080": {
+    //         "label": "depictio_frontend"
+    //     },
+    //     "8058": {
+    //         "label": "depictio_backend"
+    //     },
+    //     "9000-9001": {
+    //         "label": "minio"
+    //     }
+    // },
     "remoteEnv": {
         "MINIO_ROOT_USER": "${localEnv:MINIO_ROOT_USER}",
         "MINIO_ROOT_PASSWORD": "${localEnv:MINIO_ROOT_PASSWORD}",
         "MINIO_ACCESS_KEY": "${localEnv:MINIO_ACCESS_KEY}",
         "MINIO_SECRET_KEY": "${localEnv:MINIO_SECRET_KEY}",
         "DEPICTIO_BACKEND_DATA_VOLUME_HOST": "/workspace/depictio-data",
-        "AUTH_TMP_TOKEN": "${localEnv:AUTH_TMP_TOKEN}"
+        "AUTH_PRIVATE_KEY": "${localEnv:AUTH_PRIVATE_KEY}",
+        "AUTH_PUBLIC_KEY": "${localEnv:AUTH_PUBLIC_KEY}"
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "installGit": "true",
+            "installDocker": "true"
+        },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "version": "latest"
+        }
     }
 }
