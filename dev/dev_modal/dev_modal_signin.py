@@ -3,93 +3,13 @@ import json
 import dash_bootstrap_components as dbc
 import re
 import dash
-from dash import html, dcc
-from dash.dependencies import Input, Output, State
+from dash import html, dcc, ctx, MATCH, Input, Output, State, ALL, no_update
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
-from dash import MATCH, ALL, ctx
-
-# dashboards = [
-#     {"title": "Genome Analysis", "last_modified": "2023-10-01 14:23:08", "status": "Completed"},
-#     {"title": "Protein Folding Study", "last_modified": "2023-09-20 11:15:42", "status": "In Progress"},
-#     {"title": "Environmental Data Overview", "last_modified": "2023-10-02 09:02:55", "status": "Completed"},
-# ]
-
-# # datasets
-
-# workflows = [
-#     {
-#         "title": "nf-core/rnaseq",
-#         "creation_time": "2023-01-15 08:30:00",
-#         "last_modified": "2023-10-01 14:23:08",
-#         "status": "Completed",
-#         "data_collections": [
-#             {
-#                 "type": "Table",
-#                 "title": "Gene Expression Levels",
-#                 "description": "Differential expression analysis across samples and conditions, presented in a comprehensive table format.",
-#                 "creation_time": "2023-01-16 09:00:00",
-#                 "last_update_time": "2023-09-30 10:00:00",
-#             },
-#             {
-#                 "type": "Graph",
-#                 "title": "Expression Peaks",
-#                 "description": "Graphical representation of expression peaks over time.",
-#                 "creation_time": "2023-01-16 10:00:00",
-#                 "last_update_time": "2023-09-30 11:00:00",
-#             },
-#         ],
-#     },
-#     {
-#         "title": "galaxy/folding@home",
-#         "creation_time": "2023-02-01 07:20:00",
-#         "last_modified": "2023-09-20 11:15:42",
-#         "status": "In Progress",
-#         "data_collections": [
-#             {
-#                 "type": "JBrowse",
-#                 "title": "Protein Interaction Maps",
-#                 "description": "Interactive JBrowse map showcasing protein interactions.",
-#                 "creation_time": "2023-02-02 08:00:00",
-#                 "last_update_time": "2023-09-19 12:00:00",
-#             },
-#             {
-#                 "type": "Graph",
-#                 "title": "Folding Rate Analysis",
-#                 "description": "Analysis of protein folding rates over time displayed graphically.",
-#                 "creation_time": "2023-02-02 09:30:00",
-#                 "last_update_time": "2023-09-19 13:00:00",
-#             },
-#         ],
-#     },
-#     {
-#         "title": "nf-core/ampliseq",
-#         "creation_time": "2023-03-05 06:45:00",
-#         "last_modified": "2023-10-02 09:02:55",
-#         "status": "Completed",
-#         "data_collections": [
-#             {
-#                 "type": "Geomap",
-#                 "title": "Sample Collection Locations",
-#                 "description": "Geographical map of sample collection sites for environmental data.",
-#                 "creation_time": "2023-03-06 10:15:00",
-#                 "last_update_time": "2023-10-01 14:00:00",
-#             },
-#             {
-#                 "type": "Table",
-#                 "title": "Environmental Metrics",
-#                 "description": "Detailed metrics and environmental data collated in tabular form.",
-#                 "creation_time": "2023-03-06 11:20:00",
-#                 "last_update_time": "2023-10-01 15:30:00",
-#             },
-#         ],
-#     },
-# ]
-
 
 dashboards = []
 workflows = []
-
+filepath = "dashboards.json"
 app = dash.Dash(__name__)
 
 app.layout = html.Div(
@@ -122,6 +42,22 @@ app.layout = html.Div(
         html.Div(id="landing-page", style={"display": "none"}),  # Initially hidden
     ]
 )
+
+
+def load_dashboards_from_file(filepath):
+    print("Loading dashboards from file")
+    print(f"{filepath}")
+    try:
+        with open(filepath, "r") as file:
+            data = json.load(file)
+            return data
+    except FileNotFoundError:
+        return {"next_index": 1, "dashboards": []}  # Return default if no file exists
+
+
+def save_dashboards_to_file(data, filepath):
+    with open(filepath, "w") as file:
+        json.dump(data, file, indent=4)
 
 
 @app.callback(
@@ -176,18 +112,23 @@ def show_landing_page(data):
     [
         Input({"type": "create-dashboard-button", "index": MATCH}, "n_clicks"),
         State({"type": "create-dashboard-button", "index": MATCH}, "id"),
-        State({"type": "dashboard-index-store", "index": MATCH}, "data"),
+        # State({"type": "dashboard-index-store", "index": MATCH}, "data"),
         # Input({"type": "dashboard-index-store", "index": MATCH}, "data"),
     ],
     # prevent_initial_call=True
 )
-def create_dashboard(n_clicks, id, index_data):
+def create_dashboard(n_clicks, id):
     # if not n_clicks:
     #     return dash.no_update, dash.no_update
+
+    # Load existing dashboards
+    index_data = load_dashboards_from_file(filepath)
 
     # Assuming index_data also stores a list of dashboards
     dashboards = index_data.get("dashboards", [])
 
+    print(f"Creating dashboard for {id['index']}")
+    print(f"Existing dashboards: {dashboards}")
 
     if n_clicks:
 
@@ -197,16 +138,16 @@ def create_dashboard(n_clicks, id, index_data):
         new_dashboard = {
             "title": f"Dashboard {next_index}",
             "last_modified": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "status": "Completed",
+            "version": "V1",
             "owner": id["index"],
             "index": next_index,
         }
-
 
         dashboards.append(new_dashboard)
 
         # Updating the store data to include the new list of dashboards and the incremented index
         new_index_data = {"next_index": next_index + 1, "dashboards": dashboards}
+        save_dashboards_to_file(new_index_data, filepath)
     else:
         new_index_data = index_data
 
@@ -219,7 +160,7 @@ def create_dashboard(n_clicks, id, index_data):
                         [
                             dmc.Title(dashboard["title"], order=5),
                             dmc.Text(f"Last Modified: {dashboard['last_modified']}"),
-                            dmc.Text(f"Status: {dashboard['status']}"),
+                            dmc.Text(f"Version: {dashboard['version']}"),
                             dmc.Text(f"Owner: {dashboard['owner']}"),
                         ],
                         style={"flex": "1"},
@@ -310,33 +251,6 @@ def render_data_collection_item(data_collection):
     )
 
 
-def render_workflow_item(workflow):
-    return dmc.AccordionItem(
-        [
-            dmc.AccordionControl(dmc.Title(workflow["title"], order=5)),
-            dmc.AccordionPanel(
-                dmc.Container(
-                    [
-                        dmc.Text(f"Last Modified: {workflow['last_modified']}"),
-                        dmc.Text(f"Status: {workflow['status']}"),
-                        dmc.Divider(style={"margin": "20px 0"}),
-                        dmc.Title("Data Collections", order=4),
-                        dmc.Accordion(children=[render_data_collection_item(dc) for dc in workflow["data_collections"]]),
-                    ]
-                )
-            ),
-        ],
-        value=workflow["title"],
-    )
-
-
-def render_workflows_section(workflows):
-    return dmc.Accordion(children=[render_workflow_item(workflow) for workflow in workflows])
-
-
-from dash import no_update
-
-
 @app.callback(Output("landing-page", "children"), [Input("url", "pathname"), Input("modal-store", "data")])
 def update_landing_page(pathname, data):
     ctx = dash.callback_context
@@ -365,8 +279,6 @@ def update_landing_page(pathname, data):
                     render_welcome_section(data["email"]),
                     dmc.Title("Your Dashboards", order=3),
                     render_dashboard_list_section(data["email"]),
-                    dmc.Title("Your Workflows & Data Collections", order=3),
-                    render_workflows_section(workflows),
                 ]
             )
         # return html.Div("Please login to view this page.")
